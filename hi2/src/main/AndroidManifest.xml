@@ -36,6 +36,27 @@
                 android:screenOrientation="portrait"
                 android:theme="@style/horizontal_slide" >
         </activity>
+
+        <!-- 用户信息 -->
+        <activity
+                android:name=".UserInfoActivity"
+                android:screenOrientation="portrait"
+                android:theme="@style/horizontal_slide" >
+        </activity>
+
+        <!-- 聊天界面 -->
+        <activity
+                android:name=".ChatActivity"
+                android:screenOrientation="portrait"
+                android:theme="@style/horizontal_slide" >
+        </activity>
+
+        <!-- 添加朋友 -->
+        <activity
+                android:name=".AddFriendsFinalActivity"
+                android:screenOrientation="portrait"
+                android:theme="@style/horizontal_slide" >
+        </activity>
     </application>
 
 </manifest>

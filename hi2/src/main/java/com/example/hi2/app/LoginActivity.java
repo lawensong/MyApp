@@ -11,6 +11,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
+import com.example.hi2.utils.FileService;
 import com.example.hi2.utils.SmackClient;
 
 /**
@@ -24,11 +26,13 @@ public class LoginActivity extends Activity {
     private Button login;
     private Button register;
     private ProgressDialog dialog;
+    private FileService fileService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        fileService = new FileService(this);
 
         user = (EditText) findViewById(R.id.et_usertel);
         password = (EditText) findViewById(R.id.et_password);
@@ -42,7 +46,19 @@ public class LoginActivity extends Activity {
         login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dialog.setMessage("ÕýÔÚµÇÂ¼");
+                try {
+                    boolean result = fileService.saveToRom(user.getText().toString().trim(), password.getText().toString().trim(), "private.txt");
+                    if(result){
+                        Toast.makeText(getApplicationContext(), "save success", Toast.LENGTH_SHORT).show();
+                    }else {
+                        Toast.makeText(getApplicationContext(), "save fail", Toast.LENGTH_SHORT).show();
+                    }
+                }catch (Exception e){
+                    Log.d(TAG, "save error: "+e);
+                    Toast.makeText(getApplicationContext(), "save error", Toast.LENGTH_SHORT).show();
+                }
+
+                dialog.setMessage("loading...");
                 dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
                 dialog.show();
 
@@ -95,6 +111,7 @@ public class LoginActivity extends Activity {
             String smack_password = password.getText().toString().trim();
             SmackClient smackClient = new SmackClient();
             flag = smackClient.login(smack_user, smack_password);
+
             return null;
         }
 

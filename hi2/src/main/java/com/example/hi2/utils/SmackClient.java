@@ -14,7 +14,10 @@ import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smackx.vcardtemp.packet.VCard;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by Administrator on 2016/1/28.
@@ -164,5 +167,18 @@ public class SmackClient {
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    public List<RosterEntry> getAllEntries(){
+        List<RosterEntry> rosterEntries = new ArrayList<RosterEntry>();
+
+        Roster roster = Roster.getInstanceFor(getConnection());
+        Collection<RosterEntry> entries = roster.getEntries();
+        Iterator<RosterEntry> i = entries.iterator();
+        while (i.hasNext()){
+            rosterEntries.add(i.next());
+        }
+
+        return rosterEntries;
     }
 }
