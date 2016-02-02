@@ -3,11 +3,21 @@ package com.example.hi2.utils;
 /**
  * Created by Administrator on 2016/1/29.
  */
+import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
+import com.example.hi2.db.HiMessage;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.SmackConfiguration;
+import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.android.AndroidSmackInitializer;
+import org.jivesoftware.smack.chat.Chat;
+import org.jivesoftware.smack.chat.ChatManager;
+import org.jivesoftware.smack.chat.ChatMessageListener;
+import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
+import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
@@ -29,10 +39,18 @@ public class SmackClient {
     private String SERVER_NAME = "localhost";
     private static XMPPTCPConnection connection = null;
     private static VCard vCard;
+    private static Context context;
+    private static HiMessage hiMessage;
     private TConnectionListener tConnectionListener;
 
     synchronized public static XMPPTCPConnection getInstace(){
         return connection;
+    }
+
+    public SmackClient(){}
+
+    public SmackClient(Context context){
+        this.context = context;
     }
 
     public XMPPTCPConnection getConnection(){
@@ -180,5 +198,52 @@ public class SmackClient {
         }
 
         return rosterEntries;
+    }
+
+    public boolean sendMessage(String msg){
+        try {
+            Chat chat = ChatManager.getInstanceFor(getConnection()).createChat("sh@localhost/PC-20150119JKD1", null);
+            chat.sendMessage(msg);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    private HiMessage getHiMessage(){
+        if(hiMessage==null){
+            hiMessage = new HiMessage(context);
+        }
+        return hiMessage;
+    }
+
+    /**
+     * Ìí¼Ó¼àÌýÏûÏ¢
+     * @return
+     */
+    public boolean addPacketListener(){
+        StanzaListener stanzaListener = new StanzaListener() {
+            @Override
+            public void processPacket(Stanza packet) throws SmackException.NotConnectedException {
+                if(packet.getClass() == Message.class){
+                    Message message = (Message)packet;
+                    System.out.println("receive Message--->>>From:" + packet.getFrom().split("@")[0] + " message:" + message.getBody());
+                    getHiMessage().saveMessage(packet.getFrom().split("@")[0], packet.getTo().split("@")[0], message.getBody(), "receive");
+
+                    Intent broadcastIntent = new Intent("message");
+                    broadcastIntent.putExtra("from", packet.getFrom().split("@")[0]);
+                    broadcastIntent.putExtra("to", packet.getTo().split("@")[0]);
+                    broadcastIntent.putExtra("type", "receive");
+                    context.sendOrderedBroadcast(broadcastIntent, null);
+                }else if(packet.getClass() == Presence.class){
+                    Presence presence = (Presence)packet;
+                    System.out.println("receive Presence--->>>From: "+presence.getType());
+                } else{
+                    System.out.println("receive packet:unknown "+packet);
+                }
+            }
+        };
+        getConnection().addAsyncStanzaListener(stanzaListener, null);
+        return true;
     }
 }

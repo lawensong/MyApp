@@ -14,6 +14,7 @@ public class SplashActivity extends Activity {
     private static final String TAG = "SplashActivity";
     private static final int sleepTime = 2000;
     private FileService fileService;
+    private SmackClient smackClient;
     /**
      * Called when the activity is first created.
      */
@@ -21,6 +22,7 @@ public class SplashActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+        smackClient = new SmackClient(this);
         fileService = new FileService(this);
     }
 
@@ -32,7 +34,6 @@ public class SplashActivity extends Activity {
             @Override
             public void run() {
                 long start = System.currentTimeMillis();
-                SmackClient smackClient = new SmackClient();
                 smackClient.getConnection();
                 long costTime = System.currentTimeMillis() - start;
                 if(sleepTime > costTime){
@@ -56,6 +57,7 @@ public class SplashActivity extends Activity {
                         }
 
                         if(result){
+                            smackClient.addPacketListener();
                             startActivity(new Intent(SplashActivity.this, MainActivity.class));
                             finish();
                         }else {

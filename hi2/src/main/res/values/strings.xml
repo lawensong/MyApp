@@ -29,4 +29,7 @@
     <string name="confirm_resend">确认重发该信息？</string>
     <string name="connect_failuer_toast">请检查网络或稍候重试</string>
     <string name="network_unavailable">网络连接不可用，请检查网络</string>
+    <string name="ok">确定</string>
+    <string name="cancel">取消</string>
+    <string name="prompt">提示</string>
 </resources>

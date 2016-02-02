@@ -144,7 +144,7 @@
                 android:layout_weight="1"
                 android:gravity="bottom" >
 
-                <com.fangyuan.app.widget.PasteEditText
+                <com.example.hi2.widget.PasteEditText
                     android:id="@+id/et_sendmessage"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

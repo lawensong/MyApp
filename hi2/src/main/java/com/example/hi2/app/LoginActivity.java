@@ -98,6 +98,7 @@ public class LoginActivity extends Activity {
 
     private class MyTask extends AsyncTask<String, Integer, String>{
         private boolean flag;
+        private SmackClient smackClient;
 
         @Override
         protected void onPreExecute() {
@@ -109,7 +110,7 @@ public class LoginActivity extends Activity {
         protected String doInBackground(String... params) {
             String smack_user = user.getText().toString().trim();
             String smack_password = password.getText().toString().trim();
-            SmackClient smackClient = new SmackClient();
+            smackClient = new SmackClient();
             flag = smackClient.login(smack_user, smack_password);
 
             return null;
@@ -125,6 +126,7 @@ public class LoginActivity extends Activity {
             super.onPostExecute(s);
             dialog.dismiss();
             if(flag){
+                smackClient.addPacketListener();
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
             }else {
