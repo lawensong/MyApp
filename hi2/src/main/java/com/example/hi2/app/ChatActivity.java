@@ -27,6 +27,7 @@ import android.widget.*;
 import com.example.hi2.adapter.ExpressionAdapter;
 import com.example.hi2.adapter.ExpressionPagerAdapter;
 import com.example.hi2.adapter.MessageAdapter;
+import com.example.hi2.db.HiMessage;
 import com.example.hi2.utils.CommonUtils;
 import com.example.hi2.utils.SmackClient;
 import com.example.hi2.utils.SmileUtils;
@@ -37,6 +38,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Administrator on 2016/2/1.
@@ -80,8 +82,12 @@ public class ChatActivity extends Activity implements View.OnClickListener {
     public static final int CHATTYPE_GROUP = 2;
     public static final int CHATTYPE_CHATROOM = 3;
 
+    private static final String TYPE_RECEIVE = "receive";
+    private static final String TYPE_SEND = "send";
+
     public static final String COPY_IMAGE = "EASEMOBIMG";
-    SmackClient smackClient = new SmackClient();
+    private SmackClient smackClient;
+    private HiMessage hiMessage;
     private View recordingContainer;
     private ImageView micImage;
     private TextView recordingHint;
@@ -126,6 +132,7 @@ public class ChatActivity extends Activity implements View.OnClickListener {
     String myUserAvatar = "";
     String toUserNick="";
     String toUserAvatar="";
+    String toUser = "";
     // 分享的照片
     String iamge_path = null;
     // 设置按钮
@@ -136,12 +143,14 @@ public class ChatActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
+        smackClient = new SmackClient();
+        hiMessage = new HiMessage(this);
 
         myUser = "shnanyang";
         myUserNick = "shnanyang";
         myUserAvatar = "shnanyang";
 
-        final String user = this.getIntent().getStringExtra("user");
+        toUser = this.getIntent().getStringExtra("user");
         final String nick = this.getIntent().getStringExtra("nick");
         final String avatar = this.getIntent().getStringExtra("avatar");
 
@@ -305,10 +314,96 @@ public class ChatActivity extends Activity implements View.OnClickListener {
 
         // 注册接收消息广播
         receiver = new NewMessageBroadcastReceiver();
-        IntentFilter intentFilter = new IntentFilter();
+        IntentFilter intentFilter = new IntentFilter("message");
         // 设置广播的优先级别大于Mainacitivity,这样如果消息来的时候正好在chat页面，直接显示消息，而不是提示消息未读
         intentFilter.setPriority(5);
         registerReceiver(receiver, intentFilter);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode == 100){
+            finish();
+        }
+
+        if(resultCode == RESULT_CODE_EXIT_GROUP){
+            setResult(RESULT_OK);
+            finish();
+            return;
+        }
+        if(resultCode == REQUEST_CODE_CONTEXT_MENU){
+            switch (resultCode){
+                case RESULT_CODE_COPY: // 复制消息
+                    Map<String, String> copyMsg = adapter.getItem(data
+                            .getIntExtra("position", -1));
+                    // clipboard.setText(SmileUtils.getSmiledText(ChatActivity.this,
+                    // ((TextMessageBody) copyMsg.getBody()).getMessage()));
+                    clipboard.setText(copyMsg.get("text"));
+                    break;
+                case RESULT_CODE_DELETE: // 删除消息
+                    Map<String, String> deleteMsg = adapter.getItem(data
+                            .getIntExtra("position", -1));
+                    hiMessage.removeMessage(deleteMsg);
+                    adapter.refresh();
+                    listView.setSelection(data.getIntExtra("position",
+                            adapter.getCount()) - 1);
+                    break;
+
+                case RESULT_CODE_FORWARD: // 转发消息
+                    Map<String, String> forwardMsg = adapter.getItem(data
+                            .getIntExtra("position", -1));
+                    Intent intent = new Intent(this, ForwardMessageActivity.class);
+                    intent.putExtra("forward_msg_id", forwardMsg.get("id"));
+                    startActivity(intent);
+
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        if(resultCode==RESULT_OK){
+            if(requestCode==REQUEST_CODE_EMPTY_HISTORY){
+
+            }else if(requestCode==REQUEST_CODE_CAMERA){//发送照片
+
+            }else if(requestCode == REQUEST_CODE_SELECT_VIDEO){//发送本地视频
+
+            } else if (requestCode == REQUEST_CODE_LOCAL){//发送本地图片
+
+            } else if (requestCode == REQUEST_CODE_SELECT_FILE){//发送选择的文件
+
+            } else if (requestCode == REQUEST_CODE_MAP){//地图
+
+            } else if (requestCode == REQUEST_CODE_TEXT
+                    || requestCode == REQUEST_CODE_VOICE
+                    || requestCode == REQUEST_CODE_PICTURE
+                    || requestCode == REQUEST_CODE_LOCATION
+                    || requestCode == REQUEST_CODE_VIDEO
+                    || requestCode == REQUEST_CODE_FILE){
+                resendMessage();
+            } else if (requestCode == REQUEST_CODE_COPY_AND_PASTE){//粘贴
+                if (!TextUtils.isEmpty(clipboard.getText())) {
+                    String pasteText = clipboard.getText().toString();
+                }
+            } else if (requestCode == REQUEST_CODE_ADD_TO_BLACKLIST){//移入黑名单
+
+            } else if (hiMessage.getMsgCount(toUser, myUser) > 0){
+                adapter.refresh();
+                setResult(RESULT_OK);
+            } else if (requestCode == REQUEST_CODE_GROUP_DETAIL){
+                adapter.refresh();
+            }
+        }
+    }
+
+    /**
+     * 重发消息
+     */
+    private void resendMessage() {
+        adapter.refresh();
+        listView.setSelection(resendPos);
     }
 
     /**
@@ -359,7 +454,7 @@ public class ChatActivity extends Activity implements View.OnClickListener {
         int id = view.getId();
         if (id == R.id.btn_send) {// 点击发送按钮(发文字和表情)
             String s = mEditTextContent.getText().toString();
-            sendText(s);
+            sendText(s, toUser);
         } else if (id == R.id.btn_take_picture) {
             selectPicFromCamera();// 点击照相图标
         } else if (id == R.id.btn_picture) {
@@ -391,6 +486,63 @@ public class ChatActivity extends Activity implements View.OnClickListener {
         } else if (id == R.id.btn_voice_call) { // 点击语音电话图标
             Toast.makeText(this, "can not voice", Toast.LENGTH_SHORT)
                         .show();
+        }
+    }
+
+    /**
+     * 返回
+     *
+     * @param view
+     */
+    public void back(View view) {
+        finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        activityInstance = null;
+        // 注销广播
+        try {
+            unregisterReceiver(receiver);
+            receiver = null;
+        } catch (Exception e) {
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (wakeLock.isHeld())
+            wakeLock.release();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (more.getVisibility() == View.VISIBLE) {
+            more.setVisibility(View.GONE);
+            iv_emoticons_normal.setVisibility(View.VISIBLE);
+            iv_emoticons_checked.setVisibility(View.INVISIBLE);
+        } else {
+            finish();
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        // 点击notification bar进入聊天页面，保证只有一个聊天页面
+        String username = intent.getStringExtra("user");
+        if (toUser.equals(username))
+            super.onNewIntent(intent);
+        else {
+            finish();
+            startActivity(intent);
         }
     }
 
@@ -550,12 +702,14 @@ public class ChatActivity extends Activity implements View.OnClickListener {
      *            message content
      *            boolean resend
      */
-    private void sendText(String content) {
+    private void sendText(String content, String toUser) {
         if (content.length() > 0) {
+            Log.d(TAG, "-------->>>>>sent to user "+toUser);
             smackClient.sendMessage(content);
             listView.setSelection(listView.getCount() - 1);
             mEditTextContent.setText("");
-
+            hiMessage.saveMessage(toUser.split("@")[0], myUser, content, TYPE_SEND);
+            adapter.refresh();
             setResult(RESULT_OK);
         }
     }

@@ -42,6 +42,8 @@ public class SmackClient {
     private static Context context;
     private static HiMessage hiMessage;
     private TConnectionListener tConnectionListener;
+    private static final String TYPE_RECEIVE = "receive";
+    private static final String TYPE_SEND = "send";
 
     synchronized public static XMPPTCPConnection getInstace(){
         return connection;
@@ -228,7 +230,7 @@ public class SmackClient {
                 if(packet.getClass() == Message.class){
                     Message message = (Message)packet;
                     System.out.println("receive Message--->>>From:" + packet.getFrom().split("@")[0] + " message:" + message.getBody());
-                    getHiMessage().saveMessage(packet.getFrom().split("@")[0], packet.getTo().split("@")[0], message.getBody(), "receive");
+                    getHiMessage().saveMessage(packet.getFrom().split("@")[0], packet.getTo().split("@")[0], message.getBody(), TYPE_RECEIVE);
 
                     Intent broadcastIntent = new Intent("message");
                     broadcastIntent.putExtra("from", packet.getFrom().split("@")[0]);

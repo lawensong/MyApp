@@ -43,8 +43,8 @@ public class HiMessage {
         List<Map<String, String>> messageList = new ArrayList<Map<String, String>>();
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         if(db.isOpen()){
-            Cursor cursor = db.rawQuery("select * from "+TABLE_NAME+" where "+COLUMN_NAME_FROM+"="+from+" and "+COLUMN_NAME_TO+"="+to
-                    +" order by "+COLUMN_NAME_TIME+" desc", null);
+            Cursor cursor = db.rawQuery("select * from "+TABLE_NAME+" where "+COLUMN_NAME_FROM+"='"+from+"' and "+COLUMN_NAME_TO+"='"+to
+                    +"' order by "+COLUMN_NAME_TIME+" asc", null);
             while (cursor.moveToNext()){
                 Map<String, String> message = new HashMap<String, String>();
                 String m_from = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_FROM));
@@ -64,5 +64,23 @@ public class HiMessage {
         }
 
         return messageList;
+    }
+
+    public void removeMessage(Map<String, String> message){
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        if(db.isOpen()){
+            db.delete(TABLE_NAME, COLUMN_NAME_ID+"=?", new String[]{message.get("id")});
+        }
+    }
+
+    public int getMsgCount (String from, String to){
+        int count = 0;
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        if(db.isOpen()){
+            Cursor cursor = db.rawQuery("select * from "+TABLE_NAME+" where "+COLUMN_NAME_FROM+"='"+from+"' and "+COLUMN_NAME_TO+"='"+to, null);
+            count = cursor.getCount();
+            cursor.close();
+        }
+        return count;
     }
 }

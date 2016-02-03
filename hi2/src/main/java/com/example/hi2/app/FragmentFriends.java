@@ -79,7 +79,7 @@ public class FragmentFriends extends Fragment {
                 if(position!=0&&position!=contactList.size()+1){
                     RosterEntry user=contactList.get(position-1);
                     String username = user.getUser();
-                    startActivity(new Intent(getActivity(), UserInfoActivity.class)
+                    startActivity(new Intent(getActivity(), UserInfoActivity.class).putExtra("user", user.getUser() )
                             .putExtra("nick", user.getUser() ).putExtra("avatar", user.getUser() ).putExtra("sex", user.getUser()));
                 }
             }
