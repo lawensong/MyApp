@@ -43,6 +43,15 @@
                 android:text="使用手机号登录"
                 android:textColor="#ffffff"
                 android:textSize="18sp" />
+
+            <ImageView
+                    android:id="@+id/iv_set"
+                    android:layout_width="56dp"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/jy_btn_liaotian_shezhi_on" />
     </RelativeLayout>
 
     <LinearLayout

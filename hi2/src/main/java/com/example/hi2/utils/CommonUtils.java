@@ -7,6 +7,7 @@ import android.net.NetworkInfo;
 import com.example.hi2.app.R;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Administrator on 2016/2/2.
@@ -51,10 +52,8 @@ public class CommonUtils {
      * @param context
      * @return
      */
-    public static String getMessageDigest(String message, Context context) {
-        String digest = "";
-
-
+    public static String getMessageDigest(Map<String, String> message, Context context) {
+        String digest = message.get("text");
         return digest;
     }
 

@@ -36,4 +36,11 @@ public class FragmentCoversation extends Fragment {
         errorItem = (RelativeLayout) getView().findViewById(R.id.rl_error_item);
         errorText = (TextView) errorItem.findViewById(R.id.tv_connect_errormsg);
     }
+
+    /**
+     * Ë¢ÐÂÒ³Ãæ
+     */
+    public void refresh() {
+
+    }
 }

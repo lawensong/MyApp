@@ -11,7 +11,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
+import com.example.hi2.Hi2Application;
 import com.example.hi2.utils.FileService;
 import com.example.hi2.utils.SmackClient;
 
@@ -25,19 +27,19 @@ public class LoginActivity extends Activity {
     private EditText password;
     private Button login;
     private Button register;
+    private ImageView iv_set;
     private ProgressDialog dialog;
-    private FileService fileService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        fileService = new FileService(this);
 
         user = (EditText) findViewById(R.id.et_usertel);
         password = (EditText) findViewById(R.id.et_password);
         login = (Button) findViewById(R.id.btn_login);
         register = (Button) findViewById(R.id.btn_qtlogin);
+        iv_set = (ImageView) findViewById(R.id.iv_set);
         dialog = new ProgressDialog(LoginActivity.this);
 
         user.addTextChangedListener(new TextChange());
@@ -46,17 +48,7 @@ public class LoginActivity extends Activity {
         login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    boolean result = fileService.saveToRom(user.getText().toString().trim(), password.getText().toString().trim(), "private.txt");
-                    if(result){
-                        Toast.makeText(getApplicationContext(), "save success", Toast.LENGTH_SHORT).show();
-                    }else {
-                        Toast.makeText(getApplicationContext(), "save fail", Toast.LENGTH_SHORT).show();
-                    }
-                }catch (Exception e){
-                    Log.d(TAG, "save error: "+e);
-                    Toast.makeText(getApplicationContext(), "save error", Toast.LENGTH_SHORT).show();
-                }
+                Hi2Application.getInstance().setUsernamePassword(user.getText().toString().trim(), password.getText().toString().trim());
 
                 dialog.setMessage("loading...");
                 dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
@@ -64,6 +56,13 @@ public class LoginActivity extends Activity {
 
                 MyTask myTask = new MyTask();
                 myTask.execute();
+            }
+        });
+        iv_set.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(LoginActivity.this, SetActivity.class));
+                finish();
             }
         });
     }
@@ -98,7 +97,6 @@ public class LoginActivity extends Activity {
 
     private class MyTask extends AsyncTask<String, Integer, String>{
         private boolean flag;
-        private SmackClient smackClient;
 
         @Override
         protected void onPreExecute() {
@@ -108,10 +106,7 @@ public class LoginActivity extends Activity {
 
         @Override
         protected String doInBackground(String... params) {
-            String smack_user = user.getText().toString().trim();
-            String smack_password = password.getText().toString().trim();
-            smackClient = new SmackClient();
-            flag = smackClient.login(smack_user, smack_password);
+            flag = Hi2Application.getInstance().login();
 
             return null;
         }
@@ -126,7 +121,7 @@ public class LoginActivity extends Activity {
             super.onPostExecute(s);
             dialog.dismiss();
             if(flag){
-                smackClient.addPacketListener();
+                Hi2Application.getInstance().addPacketListener();
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
             }else {

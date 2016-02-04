@@ -1,16 +1,24 @@
 package com.example.hi2.app;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by Administrator on 2016/1/28.
  */
-public class MainActivity extends BaseActivity{
+public class MainActivity extends BaseActivity implements View.OnClickListener{
     private final static String TAG = "MainActivity";
 
     private TextView unreadLabel;
@@ -29,6 +37,8 @@ public class MainActivity extends BaseActivity{
 
     private ImageView iv_add;
     private ImageView iv_search;
+
+    private NewMessageBroadcastReceiver msgReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +97,12 @@ public class MainActivity extends BaseActivity{
                 .add(R.id.fragment_container, fragmentProfile)
                 .hide(fragmentFriends).hide(fragmentFind)
                 .hide(fragmentProfile).show(fragmentCoversation).commit();
+
+        // 注册一个接收消息的BroadcastReceiver
+        msgReceiver = new NewMessageBroadcastReceiver();
+        IntentFilter intentFilter = new IntentFilter("message");
+        intentFilter.setPriority(3);
+        registerReceiver(msgReceiver, intentFilter);
     }
 
     public void onTabClicked(View view){
@@ -121,6 +137,11 @@ public class MainActivity extends BaseActivity{
         textviews[currentTabIndex].setTextColor(0xFF999999);
         textviews[index].setTextColor(0xFF45C01A);
         currentTabIndex = index;
+    }
+
+    @Override
+    public void onClick(View v) {
+
     }
 
     /**
@@ -173,5 +194,57 @@ public class MainActivity extends BaseActivity{
                 }
             }
         });
+    }
+
+    /**
+     * 新消息广播接收者
+     *
+     *
+     */
+    private class NewMessageBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // 主页面收到消息后，主要为了提示未读，实际消息内容需要到chat页面查看
+            Log.d(TAG, "-->> Main Receiver");
+            String from = intent.getStringExtra("from");
+            String to = intent.getStringExtra("to");
+            String content = intent.getStringExtra("text");
+            Map<String, String> message = new HashMap<String, String>();
+            message.put("from", from);
+            message.put("to", to);
+            message.put("text", content);
+
+            // 2014-10-22 修复在某些机器上，在聊天页面对方发消息过来时不立即显示内容的bug
+            if (ChatActivity.activityInstance != null) {
+                if (from.equals(ChatActivity.activityInstance.toUser))
+                    return;
+            }
+
+            // 注销广播接收者，否则在ChatActivity中会收到这个广播
+            abortBroadcast();
+
+            notifyNewMessage(message);
+
+            // 刷新bottom bar消息未读数
+            updateUnreadLabel();
+            if (currentTabIndex == 0) {
+                // 当前页面如果为聊天历史页面，刷新此页面
+                if (fragmentCoversation != null) {
+                    fragmentCoversation.refresh();
+                }
+            }
+
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // 注销广播
+        try {
+            unregisterReceiver(msgReceiver);
+            msgReceiver = null;
+        } catch (Exception e) {
+        }
     }
 }

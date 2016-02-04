@@ -51,8 +51,10 @@ public class SmackClient {
 
     public SmackClient(){}
 
-    public SmackClient(Context context){
+    public SmackClient(Context context, String address, String port){
         this.context = context;
+        this.SERVER_HOST = address;
+        this.PORT = Integer.parseInt(port);
     }
 
     public XMPPTCPConnection getConnection(){
@@ -108,7 +110,11 @@ public class SmackClient {
             if(connection==null){
                 return false;
             }
-            getConnection().login(account, password);
+            try {
+                getConnection().login(account, password);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
 
             Presence presence = new Presence(Presence.Type.available);
             getConnection().sendStanza(presence);
@@ -235,6 +241,7 @@ public class SmackClient {
                     Intent broadcastIntent = new Intent("message");
                     broadcastIntent.putExtra("from", packet.getFrom().split("@")[0]);
                     broadcastIntent.putExtra("to", packet.getTo().split("@")[0]);
+                    broadcastIntent.putExtra("text", message.getBody());
                     broadcastIntent.putExtra("type", "receive");
                     context.sendOrderedBroadcast(broadcastIntent, null);
                 }else if(packet.getClass() == Presence.class){

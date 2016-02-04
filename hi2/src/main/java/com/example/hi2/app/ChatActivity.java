@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
+import com.example.hi2.Hi2Application;
 import com.example.hi2.adapter.ExpressionAdapter;
 import com.example.hi2.adapter.ExpressionPagerAdapter;
 import com.example.hi2.adapter.MessageAdapter;
@@ -43,7 +44,7 @@ import java.util.Map;
 /**
  * Created by Administrator on 2016/2/1.
  */
-public class ChatActivity extends Activity implements View.OnClickListener {
+public class ChatActivity extends BaseActivity implements View.OnClickListener {
     private final static String TAG = "ChatActivity";
 
     private static final int REQUEST_CODE_EMPTY_HISTORY = 2;
@@ -86,7 +87,6 @@ public class ChatActivity extends Activity implements View.OnClickListener {
     private static final String TYPE_SEND = "send";
 
     public static final String COPY_IMAGE = "EASEMOBIMG";
-    private SmackClient smackClient;
     private HiMessage hiMessage;
     private View recordingContainer;
     private ImageView micImage;
@@ -143,12 +143,11 @@ public class ChatActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
-        smackClient = new SmackClient();
         hiMessage = new HiMessage(this);
 
-        myUser = "shnanyang";
-        myUserNick = "shnanyang";
-        myUserAvatar = "shnanyang";
+        myUser = Hi2Application.getInstance().getUsername();
+        myUserNick = myUser;
+        myUserAvatar = myUser;
 
         toUser = this.getIntent().getStringExtra("user");
         final String nick = this.getIntent().getStringExtra("nick");
@@ -289,7 +288,7 @@ public class ChatActivity extends Activity implements View.OnClickListener {
             ((TextView) findViewById(R.id.name)).setText(groupName);
         }
 
-        adapter = new MessageAdapter(this, "sh", myUser);
+        adapter = new MessageAdapter(this, toUser.split("@")[0], myUser);
         // 显示消息
         listView.setAdapter(adapter);
         listView.setOnScrollListener(new ListScrollListener());
@@ -432,14 +431,18 @@ public class ChatActivity extends Activity implements View.OnClickListener {
     private class NewMessageBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // 记得把广播给终结掉
-            abortBroadcast();
             String from = intent.getStringExtra("from");
             String to = intent.getStringExtra("to");
             String type = intent.getStringExtra("type");
-            Log.d(TAG, "-->> chat "+type+" data from " + from + " to " + to);
-            adapter.refresh();
-            listView.setSelection(listView.getCount() - 1);
+            if(myUser==to && toUser==from){
+                // 记得把广播给终结掉
+                abortBroadcast();
+                Log.d(TAG, "-->> chat "+type+" data from " + from + " to " + to);
+                adapter.refresh();
+                listView.setSelection(listView.getCount() - 1);
+            }else {
+                return;
+            }
         }
     }
 
@@ -705,7 +708,7 @@ public class ChatActivity extends Activity implements View.OnClickListener {
     private void sendText(String content, String toUser) {
         if (content.length() > 0) {
             Log.d(TAG, "-------->>>>>sent to user "+toUser);
-            smackClient.sendMessage(content);
+            Hi2Application.getInstance().getSmackClient().sendMessage(content);
             listView.setSelection(listView.getCount() - 1);
             mEditTextContent.setText("");
             hiMessage.saveMessage(toUser.split("@")[0], myUser, content, TYPE_SEND);

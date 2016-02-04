@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import com.example.hi2.Hi2Application;
 import com.example.hi2.utils.FileService;
 import com.example.hi2.utils.SmackClient;
 
@@ -13,8 +14,7 @@ import java.util.Map;
 public class SplashActivity extends Activity {
     private static final String TAG = "SplashActivity";
     private static final int sleepTime = 2000;
-    private FileService fileService;
-    private SmackClient smackClient;
+    private Hi2Application hi2Application;
     /**
      * Called when the activity is first created.
      */
@@ -22,8 +22,7 @@ public class SplashActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
-        smackClient = new SmackClient(this);
-        fileService = new FileService(this);
+        hi2Application = Hi2Application.getInstance();
     }
 
     @Override
@@ -34,7 +33,7 @@ public class SplashActivity extends Activity {
             @Override
             public void run() {
                 long start = System.currentTimeMillis();
-                smackClient.getConnection();
+                hi2Application.getConnection();
                 long costTime = System.currentTimeMillis() - start;
                 if(sleepTime > costTime){
                     try {
@@ -43,21 +42,15 @@ public class SplashActivity extends Activity {
                         e.printStackTrace();
                     }
                 }
-                if(smackClient.getConnection() == null){
+                if(hi2Application.getConnection() == null){
                     startActivity(new Intent(SplashActivity.this, SetActivity.class));
                     finish();
                 }else {
                     try {
-                        Map<String, String> map = fileService.getUserInfo("private.txt");
-                        String smack_user = map.get("username");
-                        String smack_pass = map.get("password");
-                        Boolean result = false;
-                        if(smack_user!=null && smack_pass!=null){
-                            result = smackClient.login(smack_user, smack_pass);
-                        }
+                        Boolean result = hi2Application.login();
 
                         if(result){
-                            smackClient.addPacketListener();
+                            hi2Application.addPacketListener();
                             startActivity(new Intent(SplashActivity.this, MainActivity.class));
                             finish();
                         }else {

@@ -3,6 +3,7 @@
     package="com.example.hi2.app" >
     <uses-permission android:name="android.permission.INTERNET"></uses-permission>
     <application
+        android:name="com.example.hi2.Hi2Application"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -54,6 +55,13 @@
         <!-- 添加朋友 -->
         <activity
                 android:name=".AddFriendsFinalActivity"
+                android:screenOrientation="portrait"
+                android:theme="@style/horizontal_slide" >
+        </activity>
+
+        <!-- 设置页面 -->
+        <activity
+                android:name=".SettingActivity"
                 android:screenOrientation="portrait"
                 android:theme="@style/horizontal_slide" >
         </activity>
