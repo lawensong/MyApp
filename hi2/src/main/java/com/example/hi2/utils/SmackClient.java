@@ -22,7 +22,11 @@ import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
+import org.jivesoftware.smackx.muc.*;
 import org.jivesoftware.smackx.vcardtemp.packet.VCard;
+import org.jivesoftware.smackx.xdata.Form;
+import org.jivesoftware.smackx.xdata.FormField;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -223,6 +227,154 @@ public class SmackClient {
             hiMessage = new HiMessage(context);
         }
         return hiMessage;
+    }
+
+    /**
+     * 初始化会议室列表
+     * @return
+     */
+    public List<RoomInfo> getHostRooms(){
+        List<RoomInfo> roominfos = new ArrayList<RoomInfo>();
+        Collection<HostedRoom> hostedRooms = null;
+        try {
+            ServiceDiscoveryManager.getInstanceFor(getConnection());
+            MultiUserChatManager multiUserChatManager = MultiUserChatManager.getInstanceFor(getConnection());
+//            hostedRooms = MultiUserChatManager.getInstanceFor(getConnection()).getHostedRooms(getConnection().getServiceName());
+            hostedRooms = multiUserChatManager.getHostedRooms("conference.localhost");
+            for(HostedRoom entry: hostedRooms){
+//                roominfos.add(entry);
+//                System.out.println("get rooms "+entry.getJid());
+                roominfos.add(getRoomInfo(entry.getJid()));
+//                destroyRoom(entry.getJid());
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return roominfos;
+    }
+
+    /**
+     * 得到房间信息
+     * @param room
+     * @return
+     */
+    public RoomInfo getRoomInfo(String room){
+        MultiUserChatManager multiUserChatManager = MultiUserChatManager.getInstanceFor(getConnection());
+        RoomInfo roomInfo=null;
+        try {
+            roomInfo = multiUserChatManager.getRoomInfo(room);
+            System.out.println("-------->>>>>>>>>> "+roomInfo.getDescription());
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return roomInfo;
+    }
+
+    /**
+     * 删除房间
+     */
+    public void destroyRoom(String room){
+        MultiUserChat muc = null;
+        try {
+            muc = MultiUserChatManager.getInstanceFor(getConnection())
+                    .getMultiUserChat(room);
+            muc.destroy("destroy", "shnanyang@localhost");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 创建房间
+     * @param user
+     * @param roomName
+     * @param password
+     * @return
+     */
+    public MultiUserChat createRoom(String user, String roomName, String password, String description){
+        MultiUserChat muc = null;
+        try {
+            muc = MultiUserChatManager.getInstanceFor(getConnection())
+                    .getMultiUserChat(roomName + "@conference." + getConnection().getServiceName());
+            muc.create(roomName);
+
+            Form form = muc.getConfigurationForm();
+            Form submitForm = form.createAnswerForm();
+            List<FormField> formFields = form.getFields();
+            Iterator<FormField> fields = formFields.iterator();
+            while (fields.hasNext()){
+                FormField field = (FormField)fields.next();
+                if(!FormField.FORM_TYPE.equals(field.getType()) && field.getVariable()!=null){
+                    submitForm.setDefaultAnswer(field.getVariable());
+                }
+            }
+
+//            List<String> owners = new ArrayList<String>();
+//            owners.add(getConnection().getUser());
+//            submitForm.setAnswer("muc#roomconfig_roomowners", owners);
+            // 设置聊天室是持久聊天室，即将要被保存下来
+            submitForm.setAnswer("muc#roomconfig_persistentroom", true);
+            // 房间仅对成员开放
+            submitForm.setAnswer("muc#roomconfig_membersonly", false);
+            // 允许占有者邀请其他人
+            submitForm.setAnswer("muc#roomconfig_allowinvites", true);
+            if (!password.equals("")) {
+                // 进入是否需要密码
+                submitForm.setAnswer("muc#roomconfig_passwordprotectedroom",
+                        true);
+                // 设置进入密码
+                submitForm.setAnswer("muc#roomconfig_roomsecret", password);
+            }
+            //muc#roomconfig_changesubject
+            submitForm.setAnswer("muc#roomconfig_roomdesc", description);
+//             能够发现占有者真实 JID 的角色
+//             submitForm.setAnswer("muc#roomconfig_whois", "anyone");
+//             登录房间对话
+//            submitForm.setAnswer("muc#roomconfig_enablelogging", true);
+            // 仅允许注册的昵称登录
+//            submitForm.setAnswer("x-muc#roomconfig_reservednick", true);
+            // 允许使用者修改昵称
+//            submitForm.setAnswer("x-muc#roomconfig_canchangenick", false);
+            // 允许用户注册房间
+//            submitForm.setAnswer("x-muc#roomconfig_registration", false);
+            muc.sendConfigurationForm(submitForm);
+        }catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+        return muc;
+    }
+
+    /**
+     * 加入会议室
+     * @param user
+     * @param roomsName
+     * @param password
+     * @return
+     */
+    public MultiUserChat joinMultiUserChat(String user, String roomsName, String password){
+        try {
+            MultiUserChat muc = MultiUserChatManager.getInstanceFor(getConnection())
+                    .getMultiUserChat(roomsName + "@conference." + getConnection().getServiceName());
+            DiscussionHistory history = new DiscussionHistory();
+            history.setMaxChars(0);
+            muc.join(user, password, history, SmackConfiguration.getDefaultPacketReplyTimeout());
+            return muc;
+        }catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * 查询会议室成员名字
+     * @param muc
+     * @return
+     */
+    public List<String> findMultiUser(MultiUserChat muc){
+        List<String> listUser = muc.getOccupants();
+        return listUser;
     }
 
     /**
