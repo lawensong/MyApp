@@ -281,14 +281,16 @@ public class ChatActivity extends BaseActivity implements View.OnClickListener {
             ((TextView) findViewById(R.id.name)).setText(toChatUserNick);
             toUserNick=getIntent().getStringExtra("user");
             toUserAvatar=getIntent().getStringExtra("user");
+
+            adapter = new MessageAdapter(this, toUser.split("@")[0], myUser);
         } else {
             findViewById(R.id.container_voice_call).setVisibility(View.GONE);
-            toChatUsername = getIntent().getStringExtra("user");
-            String groupName = getIntent().getStringExtra("user");
-            ((TextView) findViewById(R.id.name)).setText(groupName);
+            toChatUsername = getIntent().getStringExtra("roomName");
+            String groupName = getIntent().getStringExtra("room");
+            ((TextView) findViewById(R.id.name)).setText(toChatUsername);
+            adapter = new MessageAdapter(this, groupName.split("@")[0], myUser);
         }
 
-        adapter = new MessageAdapter(this, toUser.split("@")[0], myUser);
         // œ‘ æœ˚œ¢
         listView.setAdapter(adapter);
         listView.setOnScrollListener(new ListScrollListener());

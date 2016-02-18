@@ -65,6 +65,13 @@
                 android:screenOrientation="portrait"
                 android:theme="@style/horizontal_slide" >
         </activity>
+
+        <!-- 创建聊天室 -->
+        <activity
+                android:name=".CreateRoomActivity"
+                android:screenOrientation="portrait"
+                android:theme="@style/horizontal_slide">
+        </activity>
     </application>
 
 </manifest>

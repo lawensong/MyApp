@@ -3,6 +3,7 @@ package com.example.hi2.app;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,6 +49,11 @@ public class FragmentCoversation extends Fragment {
         errorItem = (RelativeLayout) getView().findViewById(R.id.rl_error_item);
         errorText = (TextView) errorItem.findViewById(R.id.tv_connect_errormsg);
         smackClient = Hi2Application.getInstance().getSmackClient();
+        if(smackClient.getConnection()==null){
+            errorItem.setVisibility(View.VISIBLE);
+        }else {
+            errorItem.setVisibility(View.GONE);
+        }
 
         normalList.addAll(loadConversationsWithRecentChat());
         listView = (ListView) getView().findViewById(R.id.list);
@@ -80,6 +86,6 @@ public class FragmentCoversation extends Fragment {
      * Ë¢ÐÂÒ³Ãæ
      */
     public void refresh() {
-
+        adapter.refresh();
     }
 }

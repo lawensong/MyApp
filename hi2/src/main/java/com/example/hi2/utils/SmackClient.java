@@ -87,6 +87,7 @@ public class SmackClient {
             }
         }catch (Exception e){
 //            e.printStackTrace();
+            connection = null;
             Log.d(TAG, "--->>>openConnection error"+e);
         }
     }
@@ -144,7 +145,6 @@ public class SmackClient {
         if(conn == null){
             return;
         }
-
         Presence presence;
         try{
             switch (code){
@@ -264,10 +264,10 @@ public class SmackClient {
         RoomInfo roomInfo=null;
         try {
             roomInfo = multiUserChatManager.getRoomInfo(room);
-            System.out.println("-------->>>>>>>>>> "+roomInfo.getDescription());
         }catch (Exception e){
             e.printStackTrace();
         }
+
         return roomInfo;
     }
 

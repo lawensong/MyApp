@@ -30,7 +30,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     private int currentTabIndex;
 
     private Fragment[] fragments;
-    private FragmentCoversation fragmentCoversation;
+    public FragmentCoversation fragmentCoversation;
     private FragmentFriends fragmentFriends;
     private FragmentFind fragmentFind;
     private FragmentProfile fragmentProfile;
@@ -52,7 +52,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         iv_add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                AddPopWindow addPopWindow = new AddPopWindow(MainActivity.this);
+                addPopWindow.showPopupWindow(iv_add);
             }
         });
         iv_search.setOnClickListener(new View.OnClickListener() {
